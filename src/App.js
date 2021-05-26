@@ -1,9 +1,11 @@
-import React, { Component } from 'react';
-import ContactForm from './components/ContactForm';
-import ContactList from './components/ContactList';
-import Filter from './components/Filter';
-import { v4 as uuidv4 } from 'uuid';
-uuidv4();
+import { Component } from "react";
+import Container from "./components/Container";
+import Section from "./components/Section";
+import ContactForm from "./components/ContactForm";
+import Filter from "./components/Filter";
+import ContactList from "./components/ContactList";
+import { v4 as uuidv4 } from "uuid";
+
 
 class App extends Component {
   state = {
@@ -15,69 +17,53 @@ class App extends Component {
     ],
     filter: "",
   };
-
-  addContact = (task) => {
-    const searchSameName = this.state.contacts
-      .map((cont) => cont.name)
-      .includes(task.name);
-
-    if (searchSameName) {
-      alert(`${task.name} is already in contacts`);
-    } else if (task.name.length === 0) {
-      alert("Fields must be filled!");
-    } else {
-      const contact = {
-        ...task,
-        id: uuidv4(),
-      };
-
-      this.setState((prevState) => ({
-        contacts: [...prevState.contacts, contact],
-      }));
+  addContact = ({ name, number }) => {
+    const contact = {
+      id: uuidv4(),
+      name,
+      number,
+    };
+    if (this.state.contacts.find((el) => el.name === contact.name)) {
+      alert("already add");
+      return;
     }
+    this.setState(({ contacts }) => ({
+      contacts: [contact, ...contacts],
+    }));
   };
-
-  changeFilter = (filter) => {
-    this.setState({ filter });
+  deleteContact = (contactId) => {
+    this.setState((prevState) => ({
+      contacts: prevState.contacts.filter(
+        (contact) => contact.id !== contactId
+      ),
+    }));
+  };
+  changeFilter = (e) => {
+    this.setState({ filter: e.currentTarget.value });
   };
 
   getVisibleContacts = () => {
-    const { contacts, filter } = this.state;
+    const { filter, contacts } = this.state;
+    const normalizedFilter = filter.toLowerCase();
 
-    return contacts.filter((contacts) =>
-      contacts.name.toLowerCase().includes(filter.toLowerCase())
+    return contacts.filter((contact) =>
+      contact.name.toLowerCase().includes(normalizedFilter)
     );
   };
-
-  removeContact = (contactId) => {
-    this.setState((prevState) => {
-      return {
-        contacts: prevState.contacts.filter(({ id }) => id !== contactId),
-      };
-    });
-  };
-
   render() {
-    const { filter } = this.state;
-
-    const visibleContacts = this.getVisibleContacts();
-
     return (
-      <div>
-        <h1>Phonebook</h1>
-
-        <ContactForm onAddContact={this.addContact} />
-        <h2>Contacts</h2>
-        {visibleContacts.length > 1 && (
-          <Filter value={filter} onChangeFilter={this.changeFilter} />
-        )}
-        {visibleContacts.length > 0 && (
+      <Container>
+        <Section title={"Phonebook"}>
+          <ContactForm onSubmit={this.addContact} />
+        </Section>
+        <Section title={"Contacts"}>
+          <Filter value={this.state.filter} onChange={this.changeFilter} />
           <ContactList
-            contacts={visibleContacts}
-            onRemoveContact={this.removeContact}
+            list={this.getVisibleContacts()}
+            onClick={this.deleteContact}
           />
-        )}
-      </div>
+        </Section>
+      </Container>
     );
   }
 }
